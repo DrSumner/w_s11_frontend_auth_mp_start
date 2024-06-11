@@ -1,4 +1,7 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { useEffect } from 'react'
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true)
@@ -6,6 +9,11 @@ export default function AuthForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const navigate = useNavigate()
+
+  useEffect(() =>{
+
+  }, [message])
 
   const toggleFormMode = () => {
     setIsLogin(!isLogin)
@@ -19,6 +27,43 @@ export default function AuthForm() {
     setPassword(event.target.value)
   }
 
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setError('')
+    if(isLogin){
+      try {
+        const { data } = await axios.post(
+          "/api/auth/login",
+          {username, password}
+        )
+        setMessage(data.message)
+        setError('')
+        localStorage.setItem('token', data.token); navigate('/stars')
+      } catch (err){
+        setError(err.response.data.message)
+        console.log(err)
+      }
+    } else {
+      try{
+        await axios.post(
+          "/api/auth/register",
+          {username, password}
+        ).then((res) =>{
+          setMessage(res.data.message)
+          console.log(message)
+          setIsLogin(!isLogin)
+            })
+      } 
+      
+      catch(err) {
+        setError(err.response.data.message)
+        console.log(error)
+      }
+    }
+
+    
+  }
+
   return (
     <div className="container">
       <div aria-live="polite">{message}</div>
@@ -28,7 +73,7 @@ export default function AuthForm() {
           Switch to {isLogin ? 'Register' : 'Login'}
         </button>
       </h3>
-      <form>
+      <form onSubmit={handleSubmit} >
         <div>
           <label htmlFor="username">Username:</label>
           <input
